@@ -7,7 +7,6 @@ on:
     branches: [ develop ]
   workflow_dispatch:
 
-
 jobs:
   changes:
     runs-on: ubuntu-latest
@@ -38,7 +37,7 @@ jobs:
 
   detect-scheduler:
     needs: changes
-    if: ${{ needs.changes.outputs.scheduler ==ených'true' }}
+    if: ${{ needs.changes.outputs.scheduler == 'true' }}
     runs-on: ubuntu-latest
     steps:
     - name: Scheduler changes detected
