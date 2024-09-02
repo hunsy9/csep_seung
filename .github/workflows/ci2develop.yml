@@ -1,0 +1,53 @@
+name: Change Detection
+
+on:
+  push:
+    branches: [ develop ]
+  pull_request:
+    branches: [ develop ]
+  workflow_dispatch:
+
+
+jobs:
+  changes:
+    runs-on: ubuntu-latest
+    outputs:
+      backend: ${{ steps.filter.outputs.backend }}
+      scheduler: ${{ steps.filter.outputs.scheduler }}
+      frontend: ${{ steps.filter.outputs.frontend }}
+    steps:
+    - uses: actions/checkout@v2
+    - uses: dorny/paths-filter@v2
+      id: filter
+      with:
+        filters: |
+          backend:
+            - 'backend/**'
+          scheduler:
+            - 'scheduler/**'
+          frontend:
+            - 'frontend/**'
+
+  detect-backend:
+    needs: changes
+    if: ${{ needs.changes.outputs.backend == 'true' }}
+    runs-on: ubuntu-latest
+    steps:
+    - name: Backend changes detected
+      run: echo "backend 변경 감지됨"
+
+  detect-scheduler:
+    needs: changes
+    if: ${{ needs.changes.outputs.scheduler ==ených'true' }}
+    runs-on: ubuntu-latest
+    steps:
+    - name: Scheduler changes detected
+      run: echo "scheduler 변경 감지됨"
+
+  detect-frontend:
+    needs: changes
+    if: ${{ needs.changes.outputs.frontend == 'true' }}
+    runs-on: ubuntu-latest
+    steps:
+    - name: Frontend changes detected
+      run: echo "frontend 변경 감지됨"
