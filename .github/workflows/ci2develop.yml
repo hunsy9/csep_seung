@@ -37,7 +37,7 @@ jobs:
     - name: Get latest version from Harbor
       id: get_version
       run: |
-        HARBOR_PROJECT="your-project"
+        HARBOR_PROJECT="code-place-dev"
         HARBOR_REPO="backend"
         ARTIFACTS=$(curl -s -u "${{ secrets.HARBOR_USERNAME }}:${{ secrets.HARBOR_PASSWORD }}" \
           "https://${{ secrets.HARBOR_REGISTRY }}/api/v2.0/projects/${HARBOR_PROJECT}/repositories/${HARBOR_REPO}/artifacts?page=1&page_size=1" \
@@ -69,7 +69,9 @@ jobs:
           context: ./backend
           file: ./backend/Dockerfile
           push: true
-          tags: ${{ secrets.HARBOR_REGISTRY }}/code-place-dev/backend:${{ needs.versioning.outputs.new_tag }}
+          tags: |
+            ${{ secrets.HARBOR_REGISTRY }}/code-place-dev/backend:${{ needs.versioning.outputs.new_version }}
+            ${{ secrets.HARBOR_REGISTRY }}/code-place-dev/backend:latest
 
       - name: Backend changes detected and built
         run: echo "backend 변경 감지 및 빌드 완료"
