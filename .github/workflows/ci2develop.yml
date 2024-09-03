@@ -97,7 +97,7 @@ jobs:
         file: ./backend/Dockerfile
         push: true
         tags: |
-          ${{ secrets.HARBOR_REGISTRY }}/code-place-dev/backend:${{ needs.versioning.outputs.new_version }}
+          ${{ secrets.HARBOR_REGISTRY }}/code-place-dev/backend:${{ needs.versioning.outputs.backend_version }}
           ${{ secrets.HARBOR_REGISTRY }}/code-place-dev/backend:latest
 
     - name: Backend changes detected and built
@@ -128,7 +128,7 @@ jobs:
         file: ./scheduler/Dockerfile
         push: true
         tags: |
-          ${{ secrets.HARBOR_REGISTRY }}/code-place-dev/scheduler:${{ needs.versioning.outputs.new_version }}
+          ${{ secrets.HARBOR_REGISTRY }}/code-place-dev/scheduler:${{ needs.versioning.outputs.scheduler_version }}
           ${{ secrets.HARBOR_REGISTRY }}/code-place-dev/scheduler:latest
 
     - name: Backend changes detected and built
@@ -159,7 +159,7 @@ jobs:
         file: ./frontend/Dockerfile
         push: true
         tags: |
-          ${{ secrets.HARBOR_REGISTRY }}/code-place-dev/frontend:${{ needs.versioning.outputs.new_version }}
+          ${{ secrets.HARBOR_REGISTRY }}/code-place-dev/frontend:${{ needs.versioning.outputs.frontend_version }}
           ${{ secrets.HARBOR_REGISTRY }}/code-place-dev/frontend:latest
 
     - name: Backend changes detected and built
