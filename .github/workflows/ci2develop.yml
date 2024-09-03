@@ -46,11 +46,27 @@ jobs:
               "https://${{ secrets.HARBOR_REGISTRY }}/api/v2.0/projects/${HARBOR_PROJECT}/repositories/${HARBOR_REPO}/artifacts?page=1&page_size=1&with_tag=true" \
               | jq -r '.[0].tags[1].name')
             if [ -z "$LATEST_VERSION" ] || [ "$LATEST_VERSION" = "null" ]; then
-              echo "0.0.1"
+              echo "0.0.1-beta"
             else
-              IFS='.' read -ra VERSION_PARTS <<< "$LATEST_VERSION"
-              PATCH=$((VERSION_PARTS[2] + 1))
-              echo "${VERSION_PARTS[0]}.${VERSION_PARTS[1]}.$PATCH"
+              VERSION_WITHOUT_BETA=${LATEST_VERSION%-beta}
+              IFS='.' read -ra VERSION_PARTS <<< "$VERSION_WITHOUT_BETA"
+              local MAJOR=${VERSION_PARTS[0]}
+              local MINOR=${VERSION_PARTS[1]}
+              local PATCH=${VERSION_PARTS[2]}
+
+              PATCH=$((PATCH + 1))
+
+              if [ $PATCH -gt 9 ]; then
+              MINOR=$((MINOR + 1))
+              PATCH=0
+              fi
+
+              if [ $MINOR -gt 9 ]; then
+              MAJOR=$((MAJOR + 1))
+              MINOR=0
+              fi
+
+              echo "$MAJOR.$MINOR.$PATCH-beta"
             fi
           }
 
@@ -72,7 +88,7 @@ jobs:
             echo "New version for frontend: $FRONTEND_VERSION"
           fi
 
-  ci-backend:
+  ci-backend-dev:
     needs: [versioning, detect-changes-by-component]
     if: ${{ needs.detect-changes-by-component.outputs.backend == 'true' }}
     runs-on: ubuntu-latest
@@ -103,7 +119,7 @@ jobs:
     - name: Backend changes detected and built
       run: echo "backend 변경 감지 및 빌드 완료"
 
-  ci-scheduler:
+  ci-scheduler-dev:
     needs: [versioning, detect-changes-by-component]
     if: ${{ needs.detect-changes-by-component.outputs.scheduler == 'true' }}
     runs-on: ubuntu-latest
@@ -134,7 +150,7 @@ jobs:
     - name: Backend changes detected and built
       run: echo "scheduler 변경 감지 및 빌드 완료"
 
-  ci-frontend:
+  ci-frontend-dev:
     needs: [versioning, detect-changes-by-component]
     if: ${{ needs.detect-changes-by-component.outputs.frontend == 'true' }}
     runs-on: ubuntu-latest
