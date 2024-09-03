@@ -1,6 +1,6 @@
 services:
   web-frontend:
-    image: registry.copl-dev.site/code-place-dev/frontend:0.0.8-beta
+    image: registry.copl-dev.site/code-place-dev/frontend:latest
     pull_policy: always
     ports:
       - "8000:8000"

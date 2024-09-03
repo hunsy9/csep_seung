@@ -2,6 +2,9 @@ name: Change Detection
 
 on:
   push:
+    paths-ignore:
+      - 'deployment/**'
+      - 'scripts/**'
     branches: [ develop ]
   pull_request:
     branches: [ develop ]
