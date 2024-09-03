@@ -1,6 +1,7 @@
 services:
   web-frontend:
-    image: registry.copl-dev.site/code-place-dev/frontend:latest
+    image: registry.copl-dev.site/code-place-dev/frontend:0.0.8-beta
+    pull_policy: always
     ports:
       - "8000:8000"
       - "1443:1443"
@@ -19,6 +20,7 @@ services:
   backend:
     image: registry.copl-dev.site/code-place-dev/backend:latest
     restart: always
+    pull_policy: always
     depends_on:
       - oj-redis
       - oj-postgres
@@ -35,6 +37,7 @@ services:
   scheduler:
     image: registry.copl-dev.site/code-place-dev/scheduler:latest
     restart: always
+    pull_policy: always
     depends_on:
       - oj-postgres
       - backend
