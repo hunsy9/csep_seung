@@ -28,8 +28,8 @@ jobs:
             - 'frontend/**'
 
   versioning:
-    needs: detect-changes-by-component
-    if: ${{ needs.detect-changes-by-component.outputs.backend == 'true' }}
+    needs: changes
+    if: ${{ needs.changes.outputs.backend == 'true' }}
     runs-on: ubuntu-latest
     outputs:
       new_version: ${{ steps.bump_version.outputs.new_version }}
@@ -39,11 +39,10 @@ jobs:
         run: |
           HARBOR_PROJECT="code-place-dev"
           HARBOR_REPO="backend"
-          ARTIFACTS=$(curl -s -u "${{ secrets.HARBOR_USERNAME }}:${{ secrets.HARBOR_PASSWORD }}" \
-            "https://${{ secrets.HARBOR_REGISTRY }}/api/v2.0/projects/${HARBOR_PROJECT}/repositories/${HARBOR_REPO}/artifacts?page=1&page_size=1" \
-            | jq -r '.[0].tags[0].name')
-          LATEST_VERSION=$(echo $ARTIFACTS | grep -oP '\d+\.\d+\.\d+' | sort -V | tail -n1)
-          if [ -z "$LATEST_VERSION" ]; then
+          LATEST_VERSION=$(curl -s -X GET -u "${{ secrets.HARBOR_USERNAME }}:${{ secrets.HARBOR_PASSWORD }}" \
+            "https://${{ secrets.HARBOR_REGISTRY }}/api/v2.0/projects/${HARBOR_PROJECT}/repositories/${HARBOR_REPO}/artifacts?page=1&page_size=1&with_tag=true" \
+            | jq -r '.[0].tags[1].name')
+          if [ -z "$LATEST_VERSION" ] || [ "$LATEST_VERSION" = "null" ]; then
             NEW_VERSION="0.0.1"
           else
             IFS='.' read -ra VERSION_PARTS <<< "$LATEST_VERSION"
@@ -51,6 +50,7 @@ jobs:
             NEW_VERSION="${VERSION_PARTS[0]}.${VERSION_PARTS[1]}.$PATCH"
           fi
           echo "::set-output name=new_version::$NEW_VERSION"
+          echo "New version: $NEW_VERSION"
 
   ci-backend:
       needs: [versioning, detect-changes-by-component]
