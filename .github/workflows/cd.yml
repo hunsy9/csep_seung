@@ -1,9 +1,6 @@
 on:
-  workflow_run:
-    workflows: ["Change Detection"]
-    types:
-      - completed
-  workflow_dispatch:
+  repository_dispatch:
+    types: [trigger-cd]
 
 jobs:
   deploy:
@@ -13,10 +10,9 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v2
 
-      - name: Deploy to production
+      - name: Update Docker Swarm service
         run: |
-          cd deployment
-          chmod +x deploy-prod.sh
-          ./deploy-prod.sh
-        env:
-          DOCKER_HOST: unix:///var/run/docker.sock
+          COMPONENT=${{ github.event.client_payload.component }}
+          VERSION=${{ github.event.client_payload.version }}
+          echo "Updating $COMPONENT service to version $VERSION"
+          sudo docker service update --image ${{ secrets.HARBOR_REGISTRY }}/code-place-dev/$COMPONENT:$VERSION $COMPONENT
