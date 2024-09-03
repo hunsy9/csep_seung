@@ -50,7 +50,7 @@ addgroup -g 903 spj
 adduser -u 900 -S -G spj server
 
 #chown -R server:spj $DATA $APP/dist
-find $DATA/test_case -type d -exec chmod 710 {} \;
-find $DATA/test_case -type f -exec chmod 640 {} \;
+find $DATA/test_case -type d -exec chmod 755 {} \;
+find $DATA/test_case -type f -exec chmod 644 {} \;
 
 exec supervisord -c /app/deploy/supervisord.conf

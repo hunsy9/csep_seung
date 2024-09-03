@@ -69,7 +69,7 @@ services:
       - prod-network
 
   oj-judge:
-    image: juniper0917/csep-js:0.1
+    image: registry.copl-dev.site/code-place-dev/judge-server:1.0.0-beta
     restart: always
     #    read_only: true
     cap_drop:
