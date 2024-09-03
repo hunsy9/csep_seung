@@ -5,6 +5,7 @@ on:
 jobs:
   deploy:
     runs-on: self-hosted
+    timeout-minutes: 2
     steps:
       - name: Update Docker Swarm service
         run: |
