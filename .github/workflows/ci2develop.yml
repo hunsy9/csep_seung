@@ -28,7 +28,7 @@ jobs:
             - 'frontend/**'
 
   versioning:
-    needs: changes
+    needs: detect-changes-by-component
     if: ${{ needs.changes.outputs.backend == 'true' }}
     runs-on: ubuntu-latest
     outputs:
