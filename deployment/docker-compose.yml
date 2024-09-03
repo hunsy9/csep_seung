@@ -1,26 +1,17 @@
 services:
   web-frontend:
     image: registry.copl-dev.site/code-place-dev/frontend:latest
-    pull_policy: always
-    ports:
-      - "8000:8000"
-      - "1443:1443"
+#    pull_policy: always
     environment:
       - FORCE_HTTPS=1
-#      - TEST_SERVER=0
       # - STATIC_CDN_HOST=cdn.oj.com
     volumes:
       - ../frontend/deploy/nginx/log:/data/log
-      - data_volume:/data:ro
-      - /etc/letsencrypt/live/csep.seung.site/fullchain.pem:/etc/letsencrypt/live/csep.seung.site/fullchain.pem:ro
-      - /etc/letsencrypt/live/csep.seung.site/privkey.pem:/etc/letsencrypt/live/csep.seung.site/privkey.pem:ro
-    networks:
-      - prod-network
 
   backend:
     image: registry.copl-dev.site/code-place-dev/backend:latest
     restart: always
-    pull_policy: always
+#    pull_policy: always
     depends_on:
       - oj-redis
       - oj-postgres
@@ -31,13 +22,11 @@ services:
       - .env
     environment:
       - JUDGE_SERVER_TOKEN=CHANGE_THIS # secret.key
-    networks:
-      - prod-network
 
   scheduler:
     image: registry.copl-dev.site/code-place-dev/scheduler:latest
     restart: always
-    pull_policy: always
+#    pull_policy: always
     depends_on:
       - oj-postgres
       - backend
@@ -45,28 +34,6 @@ services:
       - ../scheduler/logs:/app/logs
     env_file:
       - .env
-    networks:
-      - prod-network
-
-  oj-redis:
-    image: redis:4.0-alpine
-    restart: always
-    volumes:
-      - ../backend/data/redis:/data
-    networks:
-      - prod-network
-
-  oj-postgres:
-    image: postgres:10-alpine
-    restart: always
-    volumes:
-      - ../backend/data/postgres:/var/lib/postgresql/data
-    env_file:
-      - .env
-    ports:
-      - "5437:5432"
-    networks:
-      - prod-network
 
   oj-judge:
     image: registry.copl-dev.site/code-place-dev/judge-server:1.0.0-beta
@@ -91,12 +58,18 @@ services:
       - TOKEN=CHANGE_THIS # secret.key
       # - judger_debug=1
 
-volumes:
-  data_volume:
-    external: true
-    name: backend-data
+  oj-redis:
+    image: redis:4.0-alpine
+    restart: always
+    volumes:
+      - ../backend/data/redis:/data
 
-networks:
-  prod-network:
-    external: true
-    name: my-network_default
+  oj-postgres:
+    image: postgres:10-alpine
+    restart: always
+    volumes:
+      - ../backend/data/postgres:/var/lib/postgresql/data
+    env_file:
+      - .env
+    ports:
+      - "5437:5432"

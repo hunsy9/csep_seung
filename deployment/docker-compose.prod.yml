@@ -1,0 +1,28 @@
+services:
+  web-frontend:
+    image: registry.copl-dev.site/code-place-dev/frontend:latest
+    environment:
+      - TEST_SERVER=0
+    ports:
+      - "8000:8000"
+      - "1443:1443"
+    volumes:
+      - data_volume:/data:ro
+      - /etc/letsencrypt/live/csep.seung.site/fullchain.pem:/etc/letsencrypt/live/csep.seung.site/fullchain.pem:ro
+      - /etc/letsencrypt/live/csep.seung.site/privkey.pem:/etc/letsencrypt/live/csep.seung.site/privkey.pem:ro
+
+  backend:
+    image: registry.copl-dev.site/code-place-dev/backend:latest
+    volumes:
+    - data_volume:/data:rw
+
+  scheduler:
+    image: registry.copl-dev.site/code-place-dev/scheduler:latest
+
+  oj-judge:
+    image: registry.copl-dev.site/code-place-dev/judge-server:1.0.0-beta
+
+volumes:
+  data_volume:
+    external: true
+    name: backend-data
