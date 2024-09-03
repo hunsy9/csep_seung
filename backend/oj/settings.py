@@ -42,6 +42,7 @@ if production_env:
 
 
 LOCAL_APPS = [
+    'school',
     'account',
     'announcement',
     'conf',
@@ -51,7 +52,6 @@ LOCAL_APPS = [
     'banner',
     'profile',
     'contents',
-    'school',
     'utils',
     'submission',
     'options',
