@@ -30,31 +30,47 @@ jobs:
   versioning:
     needs: detect-changes-by-component
     if: ${{ needs.detect-changes-by-component.outputs.backend == 'true' || needs.detect-changes-by-component.outputs.scheduler == 'true' || needs.detect-changes-by-component.outputs.frontend == 'true' }}
-    strategy:
-      matrix:
-        component: [backend, scheduler, frontend]
     runs-on: ubuntu-latest
     outputs:
-      new_version: ${{ steps.bump_version.outputs.new_version }}
+      backend_version: ${{ steps.versions.outputs.backend_version }}
+      scheduler_version: ${{ steps.versions.outputs.scheduler_version }}
+      frontend_version: ${{ steps.versions.outputs.frontend_version }}
     steps:
-      - name: Get latest version from Harbor and bump
-        id: bump_version
-        if: ${{ needs.detect-changes-by-component.outputs[matrix.component] == 'true' }}
+      - name: Get and bump versions
+        id: versions
         run: |
-          HARBOR_PROJECT="code-place-dev"
-          HARBOR_REPO="${{ matrix.component }}"
-          LATEST_VERSION=$(curl -s -X GET -u "${{ secrets.HARBOR_USERNAME }}:${{ secrets.HARBOR_PASSWORD }}" \
-            "https://${{ secrets.HARBOR_REGISTRY }}/api/v2.0/projects/${HARBOR_PROJECT}/repositories/${HARBOR_REPO}/artifacts?page=1&page_size=1&with_tag=true" \
-            | jq -r '.[0].tags[1].name')
-          if [ -z "$LATEST_VERSION" ] || [ "$LATEST_VERSION" = "null" ]; then
-            NEW_VERSION="0.0.1"
-          else
-            IFS='.' read -ra VERSION_PARTS <<< "$LATEST_VERSION"
-            PATCH=$((VERSION_PARTS[2] + 1))
-            NEW_VERSION="${VERSION_PARTS[0]}.${VERSION_PARTS[1]}.$PATCH"
+          get_and_bump_version() {
+            local HARBOR_PROJECT="code-place-dev"
+            local HARBOR_REPO="$1"
+            local LATEST_VERSION=$(curl -s -X GET -u "${{ secrets.HARBOR_USERNAME }}:${{ secrets.HARBOR_PASSWORD }}" \
+              "https://${{ secrets.HARBOR_REGISTRY }}/api/v2.0/projects/${HARBOR_PROJECT}/repositories/${HARBOR_REPO}/artifacts?page=1&page_size=1&with_tag=true" \
+              | jq -r '.[0].tags[1].name')
+            if [ -z "$LATEST_VERSION" ] || [ "$LATEST_VERSION" = "null" ]; then
+              echo "0.0.1"
+            else
+              IFS='.' read -ra VERSION_PARTS <<< "$LATEST_VERSION"
+              PATCH=$((VERSION_PARTS[2] + 1))
+              echo "${VERSION_PARTS[0]}.${VERSION_PARTS[1]}.$PATCH"
+            fi
+          }
+
+          if [ "${{ needs.detect-changes-by-component.outputs.backend }}" == "true" ]; then
+            BACKEND_VERSION=$(get_and_bump_version "backend")
+            echo "::set-output name=backend_version::$BACKEND_VERSION"
+            echo "New version for backend: $BACKEND_VERSION"
           fi
-          echo "::set-output name=new_version::$NEW_VERSION"
-          echo "New version for ${{ matrix.component }}: $NEW_VERSION"
+
+          if [ "${{ needs.detect-changes-by-component.outputs.scheduler }}" == "true" ]; then
+            SCHEDULER_VERSION=$(get_and_bump_version "scheduler")
+            echo "::set-output name=scheduler_version::$SCHEDULER_VERSION"
+            echo "New version for scheduler: $SCHEDULER_VERSION"
+          fi
+
+          if [ "${{ needs.detect-changes-by-component.outputs.frontend }}" == "true" ]; then
+            FRONTEND_VERSION=$(get_and_bump_version "frontend")
+            echo "::set-output name=frontend_version::$FRONTEND_VERSION"
+            echo "New version for frontend: $FRONTEND_VERSION"
+          fi
 
   ci-backend:
     needs: [versioning, detect-changes-by-component]
