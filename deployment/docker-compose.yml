@@ -1,0 +1,99 @@
+services:
+  web-frontend:
+    image: registry.copl-dev.site/code-place-dev/frontend:latest
+    ports:
+      - "8000:8000"
+      - "1443:1443"
+    environment:
+      - FORCE_HTTPS=1
+#      - TEST_SERVER=0
+      # - STATIC_CDN_HOST=cdn.oj.com
+    volumes:
+      - ../log:/data/log
+      - data_volume:/data:ro
+      - /etc/letsencrypt/live/csep.seung.site/fullchain.pem:/etc/letsencrypt/live/csep.seung.site/fullchain.pem:ro
+      - /etc/letsencrypt/live/code.seung.site/privkey.pem:/etc/letsencrypt/live/csep.seung.site/privkey.pem:ro
+    networks:
+      - prod-network
+
+  backend:
+    image: registry.copl-dev.site/code-place-dev/backend:latest
+    restart: always
+    depends_on:
+      - oj-redis
+      - oj-postgres
+      - oj-judge
+    volumes:
+      - data_volume:/data
+    env_file:
+      - .env
+    environment:
+      - JUDGE_SERVER_TOKEN=CHANGE_THIS # secret.key
+    networks:
+      - prod-network
+
+  scheduler:
+    image: registry.copl-dev.site/code-place-dev/scheduler:latest
+    restart: always
+    depends_on:
+      - oj-postgres
+      - backend
+    volumes:
+      - ../scheduler/logs:/app/logs
+    env_file:
+      - .env
+    networks:
+      - prod-network
+
+  oj-redis:
+    image: redis:4.0-alpine
+    restart: always
+    volumes:
+      - ../backend/data/redis:/data
+    networks:
+      - prod-network
+
+  oj-postgres:
+    image: postgres:10-alpine
+    restart: always
+    volumes:
+      - ../backend/data/postgres:/var/lib/postgresql/data
+    env_file:
+      - .env
+    ports:
+      - "5437:5432"
+    networks:
+      - prod-network
+
+  oj-judge:
+    image: juniper0917/csep-js:0.1
+    restart: always
+    #    read_only: true
+    cap_drop:
+      - SETPCAP
+      - MKNOD
+      - NET_BIND_SERVICE
+      - SYS_CHROOT
+      - SETFCAP
+      - FSETID
+    tmpfs:
+      - /tmp
+    volumes:
+      - ../backend/data/backend/test_case:/test_case:ro
+      - ../backend/data/judge_server/log:/log
+      - ../backend/data/judge_server/run:/judger
+    environment:
+      - SERVICE_URL=http://oj-judge:8080
+      - BACKEND_URL=http://backend:8080/api/judge_server_heartbeat/
+      - TOKEN=CHANGE_THIS # secret.key
+      # - judger_debug=1
+
+volumes:
+  data_volume:
+    external: true
+    name: backend-data
+
+networks:
+  prod-network:
+    external: true
+    name: my-network_default
