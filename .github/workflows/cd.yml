@@ -5,11 +5,7 @@ on:
 jobs:
   deploy:
     runs-on: self-hosted
-#    if: ${{ github.event.workflow_run.conclusion == 'success' && github.event.workflow_run.head_branch == 'develop' }}
     steps:
-      - name: Checkout code
-        uses: actions/checkout@v2
-
       - name: Update Docker Swarm service
         run: |
           COMPONENT=${{ github.event.client_payload.component }}
