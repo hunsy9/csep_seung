@@ -119,8 +119,13 @@ jobs:
           ${{ secrets.HARBOR_REGISTRY }}/code-place-dev/backend:${{ needs.versioning.outputs.backend_version }}
           ${{ secrets.HARBOR_REGISTRY }}/code-place-dev/backend:latest
 
-    - name: Backend changes detected and built
-      run: echo "backend 변경 감지 및 빌드 완료"
+    - name: Trigger CD for backend
+      if: success()
+      uses: peter-evans/repository-dispatch@v2
+      with:
+        token: ${{ secrets.REPO_ACCESS_TOKEN }}
+        event-type: trigger-cd
+        client-payload: '{"component": "backend", "version": "${{ needs.versioning.outputs.backend_version }}"}'
 
   ci-scheduler-dev:
     needs: [versioning, detect-changes-by-component]
@@ -150,8 +155,13 @@ jobs:
           ${{ secrets.HARBOR_REGISTRY }}/code-place-dev/scheduler:${{ needs.versioning.outputs.scheduler_version }}
           ${{ secrets.HARBOR_REGISTRY }}/code-place-dev/scheduler:latest
 
-    - name: Backend changes detected and built
-      run: echo "scheduler 변경 감지 및 빌드 완료"
+    - name: Trigger CD for scheduler
+      if: success()
+      uses: peter-evans/repository-dispatch@v2
+      with:
+        token: ${{ secrets.REPO_ACCESS_TOKEN }}
+        event-type: trigger-cd
+        client-payload: '{"component": "scheduler", "version": "${{ needs.versioning.outputs.scheduler_version }}"}'
 
   ci-frontend-dev:
     needs: [versioning, detect-changes-by-component]
@@ -181,5 +191,10 @@ jobs:
           ${{ secrets.HARBOR_REGISTRY }}/code-place-dev/frontend:${{ needs.versioning.outputs.frontend_version }}
           ${{ secrets.HARBOR_REGISTRY }}/code-place-dev/frontend:latest
 
-    - name: Backend changes detected and built
-      run: echo "frontend 변경 감지 및 빌드 완료"
+    - name: Trigger CD for frontend
+      if: success()
+      uses: peter-evans/repository-dispatch@v2
+      with:
+        token: ${{ secrets.REPO_ACCESS_TOKEN }}
+        event-type: trigger-cd
+        client-payload: '{"component": "frontend", "version": "${{ needs.versioning.outputs.frontend_version }}"}'
