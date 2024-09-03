@@ -9,10 +9,10 @@ services:
 #      - TEST_SERVER=0
       # - STATIC_CDN_HOST=cdn.oj.com
     volumes:
-      - ../log:/data/log
+      - ../frontend/deploy/nginx/log:/data/log
       - data_volume:/data:ro
       - /etc/letsencrypt/live/csep.seung.site/fullchain.pem:/etc/letsencrypt/live/csep.seung.site/fullchain.pem:ro
-      - /etc/letsencrypt/live/code.seung.site/privkey.pem:/etc/letsencrypt/live/csep.seung.site/privkey.pem:ro
+      - /etc/letsencrypt/live/csep.seung.site/privkey.pem:/etc/letsencrypt/live/csep.seung.site/privkey.pem:ro
     networks:
       - prod-network
 
