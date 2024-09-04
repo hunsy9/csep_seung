@@ -1,3 +1,5 @@
+ARG SERVER_NAME
+
 # Build stage
 FROM node:16 AS build-stage
 
@@ -12,15 +14,14 @@ RUN npm run build:dll
 ARG APP_VERSION
 ENV VUE_APP_VERSION=$APP_VERSION
 
-ARG SERVER_NAME
-ENV SERVER_NAME=$SERVER_NAME
-
 RUN npm run build
 
 # Production stage
 FROM nginx:stable-alpine AS production-stage
 
-ENV SERVER_NAME="csep.seung.site"
+ARG SERVER_NAME
+ENV SERVER_NAME=$SERVER_NAME
+
 WORKDIR /app
 COPY ./ /app/
 COPY --from=build-stage /app/dist /usr/share/nginx/html

@@ -23,7 +23,6 @@ echo "Using SERVER_NAME: $SERVER_NAME"
 # 동적으로 server_name 변경
 sed -i "s/__SERVER_NAME__/$SERVER_NAME/g" /app/deploy/nginx/nginx.conf
 sed -i "s/__SERVER_NAME__/$SERVER_NAME/g" /app/deploy/nginx/ssl_config.conf
-echo "Nginx configuration after substitution:"
 
 # static contents 전송을 위한 CDN 호스트 설정
 cd $DIST
