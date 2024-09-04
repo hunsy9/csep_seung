@@ -1,5 +1,5 @@
 services:
-  web-frontend:
+  frontend:
     image: registry.copl-dev.site/code-place-dev/frontend:latest
     environment:
       - TEST_SERVER=0
