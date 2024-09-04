@@ -11,5 +11,6 @@ jobs:
         run: |
           COMPONENT=${{ github.event.client_payload.component }}
           VERSION=${{ github.event.client_payload.version }}
+          DOCKER_SERVICE="${{ secrets.DOCKER_STACK_NAME }}_$COMPONENT"
           echo "Updating $COMPONENT service to version $VERSION"
-          sudo docker service update --image ${{ secrets.HARBOR_REGISTRY }}/code-place-dev/$COMPONENT:$VERSION copl-seung-prod_backend
+          sudo docker service update --image ${{ secrets.HARBOR_REGISTRY }}/code-place-dev/$COMPONENT:$VERSION $DOCKER_SERVICE
