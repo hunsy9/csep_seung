@@ -1,23 +1,25 @@
-ARG SERVER_NAME
-
 # Build stage
-FROM node:16 as build-stage
+FROM node:16 AS build-stage
 
 WORKDIR /app
 COPY package*.json ./
 RUN npm install
 COPY . .
 
-ENV NODE_ENV development
+ENV NODE_ENV=development
 RUN npm run build:dll
 
 ARG APP_VERSION
 ENV VUE_APP_VERSION=$APP_VERSION
 
+ARG SERVER_NAME
+ENV SERVER_NAME=$SERVER_NAME
+RUN echo ${SERVER_NAME}
+
 RUN npm run build
 
 # Production stage
-FROM nginx:stable-alpine as production-stage
+FROM nginx:stable-alpine AS production-stage
 
 ENV SERVER_NAME=$SERVER_NAME
 WORKDIR /app

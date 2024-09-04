@@ -13,6 +13,13 @@ else
 fi
 
 echo "Using SERVER_NAME: $SERVER_NAME"
+
+if [ -z "$SERVER_NAME" ]; then
+    # SERVER_NAME 환경 변수가 설정되지 않았을 경우 기본값 사용
+    SERVER_NAME="csep.seung.site"
+    echo "SERVER_NAME was not set, using default: $SERVER_NAME"
+fi
+
 # 동적으로 server_name 변경
 sed -i "s/__SERVER_NAME__/$SERVER_NAME/g" /app/deploy/nginx/nginx.conf
 sed -i "s/__SERVER_NAME__/$SERVER_NAME/g" /app/deploy/nginx/ssl_config.conf
