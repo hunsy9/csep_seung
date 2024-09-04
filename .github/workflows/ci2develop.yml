@@ -118,6 +118,8 @@ jobs:
         tags: |
           ${{ secrets.HARBOR_REGISTRY }}/code-place-dev/backend:${{ needs.versioning.outputs.backend_version }}
           ${{ secrets.HARBOR_REGISTRY }}/code-place-dev/backend:latest
+        labels: |
+          org.opencontainers.image.description=${{ steps.get-backend-changes.outputs.changes }}
 
     - name: Trigger CD for backend
       if: success()
