@@ -118,8 +118,6 @@ jobs:
         tags: |
           ${{ secrets.HARBOR_REGISTRY }}/code-place-dev/backend:${{ needs.versioning.outputs.backend_version }}
           ${{ secrets.HARBOR_REGISTRY }}/code-place-dev/backend:latest
-        labels: |
-          org.opencontainers.image.description=${{ steps.get-backend-changes.outputs.changes }}
 
     - name: Trigger CD for backend
       if: success()
@@ -192,6 +190,9 @@ jobs:
         tags: |
           ${{ secrets.HARBOR_REGISTRY }}/code-place-dev/frontend:${{ needs.versioning.outputs.frontend_version }}
           ${{ secrets.HARBOR_REGISTRY }}/code-place-dev/frontend:latest
+        build-args: |
+          APP_VERSION=${{ needs.versioning.outputs.frontend_version }}
+          SERVER_NAME=${{ secrets.DEV_SERVER_NAME }}
 
     - name: Trigger CD for frontend
       if: success()

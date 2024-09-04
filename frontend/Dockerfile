@@ -12,6 +12,9 @@ RUN npm run build:dll
 ARG APP_VERSION
 ENV VUE_APP_VERSION=$APP_VERSION
 
+ARG SERVER_NAME
+ENV SERVER_NAME=$SERVER_NAME
+
 RUN npm run build
 
 # Production stage
