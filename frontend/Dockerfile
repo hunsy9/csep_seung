@@ -23,6 +23,8 @@ ENV SERVER_NAME=$SERVER_NAME
 WORKDIR /app
 COPY ./ /app/
 COPY --from=build-stage /app/dist /usr/share/nginx/html
+
+RUN echo ${SERVER_NAME}
 #COPY --from=build-stage /app/deploy/nginx /etc/nginx
 #COPY --from=build-stage /app/deploy/entrypoint.sh /app/deploy/entrypoint.sh
 RUN chmod -R u=rwX,go=rX ./

@@ -191,8 +191,8 @@ jobs:
           ${{ secrets.HARBOR_REGISTRY }}/code-place-dev/frontend:${{ needs.versioning.outputs.frontend_version }}
           ${{ secrets.HARBOR_REGISTRY }}/code-place-dev/frontend:latest
         build-args: |
-          APP_VERSION=${{ needs.versioning.outputs.frontend_version }}
           SERVER_NAME=${{ secrets.DEV_SERVER_NAME }}
+          APP_VERSION=${{ needs.versioning.outputs.frontend_version }}
 
     - name: Trigger CD for frontend
       if: success()
