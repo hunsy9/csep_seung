@@ -14,14 +14,13 @@ ENV VUE_APP_VERSION=$APP_VERSION
 
 ARG SERVER_NAME
 ENV SERVER_NAME=$SERVER_NAME
-RUN echo ${SERVER_NAME}
 
 RUN npm run build
 
 # Production stage
 FROM nginx:stable-alpine AS production-stage
 
-ENV SERVER_NAME=$SERVER_NAME
+ENV SERVER_NAME="csep.seung.site"
 WORKDIR /app
 COPY ./ /app/
 COPY --from=build-stage /app/dist /usr/share/nginx/html
