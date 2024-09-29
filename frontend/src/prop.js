@@ -3,6 +3,7 @@
 // vue2에서는 inject, provide의 업데이트가 router-view를 따라 적용되지 않는 문제가 있었습니다.
 // 때문에 기존에 하나였던 api를 tab의 각각의 섹션으로 나누어서 4개의 api를 호출하는 방식으로 변경하였습니다.
 
+
     
 // OJ 대시보드의 섹션들의 prop을 정의합니다.
 // /api/profile/dashboard?username=<username> GET
