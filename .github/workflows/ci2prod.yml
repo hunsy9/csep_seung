@@ -5,7 +5,6 @@ on:
     paths-ignore:
       - 'deployment/**'
       - 'scripts/**'
-      - '.github/**'
     branches: [ main ]
   workflow_dispatch:
 
