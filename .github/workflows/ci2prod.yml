@@ -1,15 +1,39 @@
-name: Change Detection
+name: Continuous Integration to production registry and release (PROD)
 
 on:
   push:
     paths-ignore:
       - 'deployment/**'
       - 'scripts/**'
+      - '.github/**'
     branches: [ main ]
   workflow_dispatch:
 
 jobs:
+  check-release-branch:
+    runs-on: ubuntu-latest
+    outputs:
+      is_release: ${{ steps.check_branch.outputs.is_release }}
+      version: ${{ steps.extract_version.outputs.version }}
+    steps:
+      - name: Check if merged from release branch
+        id: check_branch
+        run: |
+          if [[ ${{ github.event.head_commit.message }} =~ ^Merge pull request.*from.*release- ]]; then
+            echo "is_release=true" >> $GITHUB_OUTPUT
+          else
+            echo "is_release=false" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Extract version from merge commit message
+        if: steps.check_branch.outputs.is_release == 'true'
+        id: extract_version
+        run: |
+          VERSION=$(echo "${{ github.event.head_commit.message }}" | grep -oP 'release-\K[0-9]+\.[0-9]+\.[0-9]+')
+          echo "version=$VERSION" >> $GITHUB_OUTPUT
+
   detect-changes-by-component:
+    needs: [check-release-branch]
     runs-on: ubuntu-latest
     outputs:
       backend: ${{ steps.filter.outputs.backend }}
@@ -28,70 +52,9 @@ jobs:
             frontend:
               - 'frontend/**'
 
-  versioning:
-    needs: detect-changes-by-component
-    if: ${{ needs.detect-changes-by-component.outputs.backend == 'true' || needs.detect-changes-by-component.outputs.scheduler == 'true' || needs.detect-changes-by-component.outputs.frontend == 'true' }}
-    runs-on: ubuntu-latest
-    outputs:
-      backend_version: ${{ steps.versions.outputs.backend_version }}
-      scheduler_version: ${{ steps.versions.outputs.scheduler_version }}
-      frontend_version: ${{ steps.versions.outputs.frontend_version }}
-    steps:
-      - name: Get and bump versions
-        id: versions
-        run: |
-          get_and_bump_version() {
-            local HARBOR_PROJECT="code-place"
-            local HARBOR_REPO="$1"
-            local LATEST_VERSION=$(curl -s -X GET -u "${{ secrets.HARBOR_USERNAME }}:${{ secrets.HARBOR_PASSWORD }}" \
-              "https://${{ secrets.HARBOR_REGISTRY }}/api/v2.0/projects/${HARBOR_PROJECT}/repositories/${HARBOR_REPO}/artifacts?page=1&page_size=1&with_tag=true" \
-              | jq -r '.[0].tags[1].name')
-            if [ -z "$LATEST_VERSION" ] || [ "$LATEST_VERSION" = "null" ]; then
-              echo "0.0.1-beta"
-            else
-              VERSION_WITHOUT_BETA=${LATEST_VERSION%-beta}
-              IFS='.' read -ra VERSION_PARTS <<< "$VERSION_WITHOUT_BETA"
-              local MAJOR=${VERSION_PARTS[0]}
-              local MINOR=${VERSION_PARTS[1]}
-              local PATCH=${VERSION_PARTS[2]}
-
-              PATCH=$((PATCH + 1))
-
-              if [ $PATCH -gt 9 ]; then
-              MINOR=$((MINOR + 1))
-              PATCH=0
-              fi
-
-              if [ $MINOR -gt 9 ]; then
-              MAJOR=$((MAJOR + 1))
-              MINOR=0
-              fi
-
-              echo "$MAJOR.$MINOR.$PATCH-beta"
-            fi
-          }
-
-          if [ "${{ needs.detect-changes-by-component.outputs.backend }}" == "true" ]; then
-            BACKEND_VERSION=$(get_and_bump_version "backend")
-            echo "::set-output name=backend_version::$BACKEND_VERSION"
-            echo "New version for backend: $BACKEND_VERSION"
-          fi
-
-          if [ "${{ needs.detect-changes-by-component.outputs.scheduler }}" == "true" ]; then
-            SCHEDULER_VERSION=$(get_and_bump_version "scheduler")
-            echo "::set-output name=scheduler_version::$SCHEDULER_VERSION"
-            echo "New version for scheduler: $SCHEDULER_VERSION"
-          fi
-
-          if [ "${{ needs.detect-changes-by-component.outputs.frontend }}" == "true" ]; then
-            FRONTEND_VERSION=$(get_and_bump_version "frontend")
-            echo "::set-output name=frontend_version::$FRONTEND_VERSION"
-            echo "New version for frontend: $FRONTEND_VERSION"
-          fi
-
-  ci-backend-dev:
-    needs: [versioning, detect-changes-by-component]
-    if: ${{ needs.detect-changes-by-component.outputs.backend == 'true' }}
+  ci-backend:
+    needs: [check-release-branch, detect-changes-by-component]
+    if: ${{ needs.check-release-branch.outputs.is_release == 'true' && needs.detect-changes-by-component.outputs.backend == 'true' }}
     runs-on: ubuntu-latest
     steps:
       - name: Checkout code
@@ -114,20 +77,12 @@ jobs:
           file: ./backend/Dockerfile
           push: true
           tags: |
-            ${{ secrets.HARBOR_REGISTRY }}/code-place-dev/backend:${{ needs.versioning.outputs.backend_version }}
-            ${{ secrets.HARBOR_REGISTRY }}/code-place-dev/backend:latest
+            ${{ secrets.HARBOR_REGISTRY }}/code-place-prod/backend:${{ github.sha }}-prod
+            ${{ secrets.HARBOR_REGISTRY }}/code-place-prod/backend:latest
 
-      - name: Trigger CD for backend
-        if: success()
-        uses: peter-evans/repository-dispatch@v2
-        with:
-          token: ${{ secrets.REPO_ACCESS_TOKEN }}
-          event-type: trigger-cd
-          client-payload: '{"component": "backend", "version": "${{ needs.versioning.outputs.backend_version }}"}'
-
-  ci-scheduler-dev:
-    needs: [versioning, detect-changes-by-component]
-    if: ${{ needs.detect-changes-by-component.outputs.scheduler == 'true' }}
+  ci-scheduler:
+    needs: [check-release-branch, detect-changes-by-component]
+    if: ${{ needs.check-release-branch.outputs.is_release == 'true' && needs.detect-changes-by-component.outputs.scheduler == 'true' }}
     runs-on: ubuntu-latest
     steps:
       - name: Checkout code
@@ -150,20 +105,12 @@ jobs:
           file: ./scheduler/Dockerfile
           push: true
           tags: |
-            ${{ secrets.HARBOR_REGISTRY }}/code-place-dev/scheduler:${{ needs.versioning.outputs.scheduler_version }}
-            ${{ secrets.HARBOR_REGISTRY }}/code-place-dev/scheduler:latest
+            ${{ secrets.HARBOR_REGISTRY }}/code-place-prod/scheduler:${{ github.sha }}-prod
+            ${{ secrets.HARBOR_REGISTRY }}/code-place-prod/scheduler:latest
 
-      - name: Trigger CD for scheduler
-        if: success()
-        uses: peter-evans/repository-dispatch@v2
-        with:
-          token: ${{ secrets.REPO_ACCESS_TOKEN }}
-          event-type: trigger-cd
-          client-payload: '{"component": "scheduler", "version": "${{ needs.versioning.outputs.scheduler_version }}"}'
-
-  ci-frontend-dev:
-    needs: [versioning, detect-changes-by-component]
-    if: ${{ needs.detect-changes-by-component.outputs.frontend == 'true' }}
+  ci-frontend:
+    needs: [check-release-branch, detect-changes-by-component]
+    if: ${{ needs.check-release-branch.outputs.is_release == 'true' && needs.detect-changes-by-component.outputs.frontend == 'true' }}
     runs-on: ubuntu-latest
     steps:
       - name: Checkout code
@@ -186,15 +133,27 @@ jobs:
           file: ./frontend/Dockerfile
           push: true
           tags: |
-            ${{ secrets.HARBOR_REGISTRY }}/code-place-dev/frontend:${{ needs.versioning.outputs.frontend_version }}
-            ${{ secrets.HARBOR_REGISTRY }}/code-place-dev/frontend:latest
+            ${{ secrets.HARBOR_REGISTRY }}/code-place-prod/frontend:${{ github.sha }}-prod
+            ${{ secrets.HARBOR_REGISTRY }}/code-place-prod/frontend:latest
           build-args: |
-            APP_VERSION=${{ needs.versioning.outputs.frontend_version }}
+            SERVER_NAME=${{ secrets.DEV_SERVER_NAME }}
+            APP_VERSION=${{ github.sha }}
 
-      - name: Trigger CD for frontend
-        if: success()
-        uses: peter-evans/repository-dispatch@v2
+  create-release:
+    needs: [ check-release-branch, ci-frontend, ci-backend, ci-scheduler ]
+    if: needs.check-release-branch.outputs.is_release == 'true'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v2
+
+      - name: Create Release
+        uses: actions/create-release@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.REPO_ACCESS_TOKEN }}
         with:
-          token: ${{ secrets.REPO_ACCESS_TOKEN }}
-          event-type: trigger-cd
-          client-payload: '{"component": "frontend", "version": "${{ needs.versioning.outputs.frontend_version }}"}'
+          tag_name: ${{ needs.check-release-branch.outputs.version }}
+          release_name: Release ${{ needs.check-release-branch.outputs.version }}
+          draft: false
+          prerelease: false
+
