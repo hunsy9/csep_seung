@@ -33,9 +33,12 @@ jobs:
       #     GITHUB_TOKEN: ${{ secrets.REPO_ACCESS_TOKEN }}
             
 
-      - name: Slack Notification for Manual Testing
+      - name: action-slack
         uses: 8398a7/action-slack@v3
         with:
           status: ${{ job.status }}
-          text: ":warning: New production PR from ${{ github.head_ref }} needs manual testing! Please review and test thoroughly."
-          webhook_url: ${{ secrets.SLACK_WEBHOOK_URL }}
+          author_name: codeplace
+          fields: repo,message,commit,author,action,eventName,ref,workflow,job,took
+          if_mention: failure,cancelled
+        env:
+          SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
