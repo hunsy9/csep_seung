@@ -28,11 +28,9 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v2
 
-      - name: Run security scan
-        uses: github/codeql-action/analyze@v1
-
-      - name: Check for sensitive data
-        uses: zricethezav/gitleaks-action@master
+      - name: Security and Licence Scan
+        uses: ShiftLeftSecurity/scan-action@v1.3.0
+            
 
       # - name: Slack Notification for Manual Testing
       #   uses: 8398a7/action-slack@v3
