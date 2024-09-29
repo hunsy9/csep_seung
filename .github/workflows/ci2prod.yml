@@ -169,7 +169,10 @@ jobs:
           fi
 
   create-release:
-    needs: [ check-release-branch, ci-frontend, ci-backend, ci-scheduler ]
+    needs: [ check-release-branch, prepare-release ]
+    if: |
+      needs.check-release-branch.outputs.is_release == 'true' &&
+      needs.prepare-release.outputs.release_needed == 'true'
     runs-on: ubuntu-latest
     steps:
       - name: Checkout Code
