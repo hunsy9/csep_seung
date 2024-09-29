@@ -1,0 +1,42 @@
+name: Production Pull Request Checks
+
+on:
+  pull_request:
+    branches:
+      - main
+
+jobs:
+  check-branch-name:
+    runs-on: ubuntu-latest
+    outputs:
+      is_release: ${{ steps.check_name.outputs.is_release }}
+    steps:
+      - name: Check if PR is from a release branch
+        id: check_name
+        run: |
+          if [[ ${{ github.head_ref }} =~ ^release- ]]; then
+            echo "is_release=true" >> $GITHUB_OUTPUT
+          else
+            echo "is_release=false" >> $GITHUB_OUTPUT
+          fi
+
+  production-pr-checks:
+    needs: [check-branch-name]
+    if: needs.check-branch-name.outputs.is_release == 'true'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v2
+
+      - name: Run security scan
+        uses: github/codeql-action/analyze@v1
+
+      - name: Check for sensitive data
+        uses: zricethezav/gitleaks-action@master
+
+      # - name: Slack Notification for Manual Testing
+      #   uses: 8398a7/action-slack@v3
+      #   with:
+      #     status: ${{ job.status }}
+      #     text: ":warning: New production PR from ${{ github.head_ref }} needs manual testing! Please review and test thoroughly."
+      #     webhook_url: ${{ secrets.SLACK_WEBHOOK }}
