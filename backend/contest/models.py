@@ -14,7 +14,7 @@ class Contest(models.Model):
     # show real time rank or cached rank
     real_time_rank = models.BooleanField()
     password = models.TextField(null=True)
-    # enum of ContestRuleType
+    # enum of Contes
     rule_type = models.TextField()
     start_time = models.DateTimeField()
     end_time = models.DateTimeField()
