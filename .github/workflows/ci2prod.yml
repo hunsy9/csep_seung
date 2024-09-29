@@ -84,7 +84,7 @@ jobs:
 
   ci-scheduler:
     needs: [detect-changes-by-component]
-    if: ${{ needs.detect-changes-by-component.outputs.backend == 'true' }}
+    if: ${{ needs.detect-changes-by-component.outputs.scheduler == 'true' }}
     runs-on: ubuntu-latest
     steps:
       - name: Checkout code
@@ -112,7 +112,7 @@ jobs:
 
   ci-frontend:
     needs: [detect-changes-by-component]
-    if: ${{ needs.detect-changes-by-component.outputs.backend == 'true' }}
+    if: ${{ needs.detect-changes-by-component.outputs.frontend == 'true' }}
     runs-on: ubuntu-latest
     steps:
       - name: Checkout code
