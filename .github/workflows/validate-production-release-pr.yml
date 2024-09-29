@@ -28,8 +28,9 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v2
 
-      - name: Security and Licence Scan
-        uses: ShiftLeftSecurity/scan-action@v1.3.0
+      - uses: gitleaks/gitleaks-action@v2
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
             
 
       # - name: Slack Notification for Manual Testing
