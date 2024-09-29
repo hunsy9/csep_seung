@@ -84,7 +84,9 @@ jobs:
           tags: |
             ${{ secrets.HARBOR_REGISTRY }}/code-place-prod/backend:${{ github.sha }}-prod
             ${{ secrets.HARBOR_REGISTRY }}/code-place-prod/backend:latest
-
+    outputs:
+      status: ${{ job.status }}
+      
   ci-scheduler:
     needs: [detect-changes-by-component]
     if: ${{ needs.detect-changes-by-component.outputs.scheduler == 'true' }}
@@ -112,6 +114,8 @@ jobs:
           tags: |
             ${{ secrets.HARBOR_REGISTRY }}/code-place-prod/scheduler:${{ github.sha }}-prod
             ${{ secrets.HARBOR_REGISTRY }}/code-place-prod/scheduler:latest
+    outputs:
+      status: ${{ job.status }}
 
   ci-frontend:
     needs: [detect-changes-by-component]
@@ -143,6 +147,26 @@ jobs:
           build-args: |
             SERVER_NAME=${{ secrets.DEV_SERVER_NAME }}
             APP_VERSION=${{ github.sha }}
+    outputs:
+      status: ${{ job.status }}
+
+  prepare-release:
+    needs: [check-release-branch, ci-backend, ci-frontend, ci-scheduler]
+    if: needs.check-release-branch.outputs.is_release == 'true'
+    runs-on: ubuntu-latest
+    outputs:
+      release_needed: ${{ steps.check_ci_status.outputs.release_needed }}
+    steps:
+      - name: Check CI status
+        id: check_ci_status
+        run: |
+          if [[ "${{ needs.ci-backend.result }}" == "success" || "${{ needs.ci-backend.result }}" == "skipped" ]] && \
+             [[ "${{ needs.ci-frontend.result }}" == "success" || "${{ needs.ci-frontend.result }}" == "skipped" ]] && \
+             [[ "${{ needs.ci-scheduler.result }}" == "success" || "${{ needs.ci-scheduler.result }}" == "skipped" ]]; then
+            echo "release_needed=true" >> $GITHUB_OUTPUT
+          else
+            echo "release_needed=false" >> $GITHUB_OUTPUT
+          fi
 
   create-release:
     needs: [ check-release-branch, ci-frontend, ci-backend, ci-scheduler ]
