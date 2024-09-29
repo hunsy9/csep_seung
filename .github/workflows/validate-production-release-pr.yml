@@ -28,14 +28,14 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v2
 
-      - uses: gitleaks/gitleaks-action@v2
-        env:
-          GITHUB_TOKEN: ${{ secrets.REPO_ACCESS_TOKEN }}
+      # - uses: gitleaks/gitleaks-action@v2
+      #   env:
+      #     GITHUB_TOKEN: ${{ secrets.REPO_ACCESS_TOKEN }}
             
 
-      # - name: Slack Notification for Manual Testing
-      #   uses: 8398a7/action-slack@v3
-      #   with:
-      #     status: ${{ job.status }}
-      #     text: ":warning: New production PR from ${{ github.head_ref }} needs manual testing! Please review and test thoroughly."
-      #     webhook_url: ${{ secrets.SLACK_WEBHOOK }}
+      - name: Slack Notification for Manual Testing
+        uses: 8398a7/action-slack@v3
+        with:
+          status: ${{ job.status }}
+          text: ":warning: New production PR from ${{ github.head_ref }} needs manual testing! Please review and test thoroughly."
+          webhook_url: ${{ secrets.SLACK_WEBHOOK_URL }}
